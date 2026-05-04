@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>César | Cifrado Minimalista</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --border: #000000;
+      --faded: #757575;
+      --accent: #f0f0f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      selection-background: var(--text);
+      selection-color: var(--bg);
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, sans-serif;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: grayscale;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 450px;
+      padding: 2rem;
+      border: 2px solid var(--border);
+      box-shadow: 10px 10px 0px var(--border);
+    }
+
+    header {
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      margin: 0;
+    }
+
+    .field-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      letter-spacing: 1px;
+    }
+
+    textarea {
+      width: 100%;
+      border: 2px solid var(--border);
+      padding: 1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1rem;
+      outline: none;
+      resize: vertical;
+      min-height: 120px;
+      background: transparent;
+    }
+
+    textarea:focus {
+      background-color: var(--accent);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      border: 2px solid var(--border);
+      padding: 0.8rem;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 2rem;
+    }
+
+    button {
+      flex: 1;
+      background: var(--text);
+      color: var(--bg);
+      border: 2px solid var(--border);
+      padding: 0.8rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    button:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--faded);
+      border-color: transparent;
+      flex: 0.5;
+    }
+
+    button.secondary:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    .output-area {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: var(--accent);
+      border: 1px dashed var(--border);
+      min-height: 60px;
+      word-break: break-all;
+    }
+
+    #outputText {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    /* Estética de scrollbar */
+    textarea::-webkit-scrollbar { width: 4px; }
+    textarea::-webkit-scrollbar-thumb { background: var(--border); }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>CIFRADO CÉSAR</h1>
+    </header>
+
+    <div class="field-group">
+      <label for="inputText">Mensaje de entrada</label>
+      <textarea id="inputText" placeholder="Escribe aquí..."></textarea>
+    </div>
+
+    <div class="controls">
+      <div class="field-group" style="margin:0">
+        <label>Desplazamiento (Shift)</label>
+        <input type="number" id="shift" value="3">
+      </div>
+      <button class="secondary" onclick="clearAll()">Reiniciar</button>
+    </div>
+
+    <div class="btn-group">
+      <button onclick="encrypt()">Cifrar</button>
+      <button onclick="decrypt()">Descifrar</button>
+    </div>
+
+    <div class="field-group" style="margin-top: 2rem;">
+      <label>Resultado</label>
+      <div class="output-area">
+        <p id="outputText"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function caesarCipher(str, shift) {
+      return str.replace(/[a-zA-Z]/g, function(char) {
+        const code = char.charCodeAt(0);
+        const base = (code >= 65 && code <= 90) ? 65 : 97;
+        return String.fromCharCode(((code - base + shift % 26 + 26) % 26) + base);
+      });
+    }
+
+    function encrypt() {
+      const text = document.getElementById("inputText").value;
+      const shift = parseInt(document.getElementById("shift").value) || 0;
+      document.getElementById("outputText").innerText = text ? caesarCipher(text, shift) : "---";
+    }
+
+    function decrypt() {
+      const text = document.getElementById("inputText").value;
+      const shift = parseInt(document.getElementById("shift").value) || 0;
+      document.getElementById("outputText").innerText = text ? caesarCipher(text, -shift) : "---";
+    }
+
+    function clearAll() {
+      document.getElementById("inputText").value = "";
+      document.getElementById("shift").value = "3";
+      document.getElementById("outputText").innerText = "";
+    }
+  </script>
+
+</body>
+</html>

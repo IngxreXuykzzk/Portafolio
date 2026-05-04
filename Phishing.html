@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimal Scan // Security</title>
+  <style>
+    :root {
+      --bg: #fdfdfd;
+      --text: #1a1a1a;
+      --accent: #000000;
+      --line: #e0e0e0;
+      --gray: #757575;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 600px;
+      padding: 40px 20px;
+    }
+
+    /* Navegación sutil */
+    .nav-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border-bottom: 1px solid var(--accent);
+      padding-bottom: 10px;
+      margin-bottom: 40px;
+    }
+
+    /* Cuerpo del correo */
+    .header-field {
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+
+    .header-field span {
+      color: var(--gray);
+      width: 60px;
+      display: inline-block;
+      font-weight: 500;
+    }
+
+    .main-body {
+      margin: 40px 0;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #333;
+      min-height: 220px;
+    }
+
+    .url-preview {
+      border-left: 2px solid var(--accent);
+      padding: 15px 20px;
+      background: #f8f8f8;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--gray);
+      word-break: break-all;
+      margin-bottom: 50px;
+    }
+
+    /* Botones Minimalistas */
+    .actions {
+      display: flex;
+      gap: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      background: none;
+      border: 1px solid var(--accent);
+      padding: 15px;
+      font-family: inherit;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Feedback */
+    #feedback {
+      display: none;
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 20px;
+      border: 1px solid var(--line);
+    }
+
+    .btn-next {
+      width: 100%;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 15px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    .footer {
+      margin-top: 60px;
+      font-size: 10px;
+      color: var(--gray);
+      display: flex;
+      justify-content: space-between;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="nav-top">
+    <span>TEST</span>
+    <span id="counter">Log 01 / 10</span>
+  </div>
+
+  <div id="game-container">
+    <div class="header-field"><span>De</span> <strong id="from"></strong></div>
+    <div class="header-field"><span>Asunto</span> <strong id="subject"></strong></div>
+
+    <div class="main-body" id="body"></div>
+
+    <div class="url-preview" id="url"></div>
+
+    <div class="actions" id="controls">
+      <button class="btn" onclick="runCheck(true)">Sospechoso</button>
+      <button class="btn" onclick="runCheck(false)">Confiable</button>
+    </div>
+
+    <div id="feedback"></div>
+    <button id="next" class="btn-next" style="display:none" onclick="loadNext()">Continuar</button>
+  </div>
+
+  <div class="footer">
+    <span>Anti Phishing</span>
+    <span>Score: <span id="score">0%</span></span>
+  </div>
+</div>
+
+<script>
+  const scenarios = [
+    {
+      f: "Nu México <no-reply@nu.com.mx>",
+      s: "Tu estado de cuenta de Mayo ya está disponible",
+      b: "Hola,\n\nYa puedes consultar tu estado de cuenta en la aplicación. Recuerda que tu fecha límite de pago es el 15 de mayo. No compartas tus claves con nadie.",
+      u: "https://nu.com.mx/consulta-estado",
+      p: false,
+      r: "LEGÍTIMO: Dominio oficial verificado. No hay redirecciones a sitios externos de terceros."
+    },
+    {
+      f: "Mercado Pago <seguridad@mercado-pagos-auth.com>",
+      s: "⚠️ Suspención temporal de tu cuenta",
+      b: "Detectamos una discrepancia en tus datos fiscales. Para evitar multas y el bloqueo de tu dinero, valida tu identidad en nuestro nuevo portal de cumplimiento.",
+      u: "http://mercado-pagos-auth.com/verificacion-id",
+      p: true,
+      r: "PHISHING: El dominio tiene palabras adicionales ('-auth'). Mercado Pago centraliza todo en mercadopago.com.mx."
+    },
+    {
+      f: "Soporte Técnico Microsoft <support@microsoft.com>",
+      s: "ALERTA: Tu licencia de Windows expirará en 24 horas",
+      b: "Se ha detectado un problema con tu clave de producto. Para evitar la pérdida de archivos, descarga el asistente de reactivación adjunto en el enlace.",
+      u: "https://ms-activation-service.net/download/fix.exe",
+      p: true,
+      r: "PHISHING: Microsoft no envía archivos .exe por correo para activar licencias."
+    },
+    {
+      f: "Netflix <info@mailer.netflix.com>",
+      s: "Tu pago ha sido procesado con éxito",
+      b: "Gracias por ser parte de Netflix. El cargo de $219.00 MXN se ha realizado a tu tarjeta terminada en 4421.",
+      u: "https://www.netflix.com/YourAccount",
+      p: false,
+      r: "LEGÍTIMO: Subdominio de envío masivo oficial de Netflix."
+    },
+    {
+      f: "Administración SAT <contacto@sat-gob-mex.org>",
+      s: "Tienes un saldo a favor de $4,500 MXN",
+      b: "Tras la última revisión anual, tienes una devolución pendiente. Ingresa tu CLABE interbancaria para recibir el depósito hoy mismo.",
+      u: "http://devoluciones-sat.org/clabe-registro",
+      p: true,
+      r: "PHISHING: El gobierno de México solo usa dominios .gob.mx."
+    },
+    {
+      f: "Google Security <no-reply@accounts.google.com>",
+      s: "Alerta de seguridad para tu cuenta",
+      b: "Alguien acaba de iniciar sesión en tu cuenta desde un dispositivo Linux. Si no fuiste tú, revisa tu actividad.",
+      u: "https://accounts.google.com/SecurityCheckup",
+      p: false,
+      r: "LEGÍTIMO: Origen y destino coinciden con los protocolos de Google."
+    },
+    {
+      f: "Estafeta Rastreo <notificaciones@estafeta-envios.info>",
+      s: "Paquete retenido: Error en dirección",
+      b: "No pudimos entregar tu paquete #GUIA8821. Es necesario confirmar tu domicilio y pagar una tarifa de re-envío de $20 MXN.",
+      u: "https://estafeta-envios.info/pago-seguro",
+      p: true,
+      r: "PHISHING: Los servicios de mensajería no usan dominios .info para cobrar tarifas extras."
+    },
+    {
+      f: "Recursos Humanos <rrhh@tuempresa.com>",
+      s: "Nuevas políticas de Home Office 2026",
+      b: "Hola equipo, favor de revisar el enlace de SharePoint con los cambios en los días de oficina obligatorios.",
+      u: "https://sharepoint-tuempresa.com/v/docs",
+      p: false,
+      r: "LEGÍTIMO: Comunicación interna corporativa típica."
+    },
+    {
+      f: "Mullvad VPN Support <support@mullvadvpn.net>",
+      s: "Tu suscripción ha finalizado",
+      b: "Para mantener tu anonimato, renueva tu suscripción enviando el pago a la siguiente wallet.",
+      u: "https://mullvadvpn.net/account/renew",
+      p: true,
+      r: "PHISHING: El dominio oficial es mullvad.net (sin 'vpn')."
+    },
+    {
+      f: "PayPal <service@paypal.com.mx>",
+      s: "Confirmación de pago a Inversiones DiDi",
+      b: "Si no reconoces esta transacción de $1,200.00 MXN, puedes cancelarla en nuestro centro de resoluciones.",
+      u: "https://paypal-center-resolutions.com/dispute",
+      p: true,
+      r: "PHISHING: PayPal nunca usa dominios externos para disputas."
+    }
+  ];
+
+  let current = 0;
+  let score = 0;
+
+  function loadItem() {
+    if (current >= scenarios.length) {
+      showResults();
+      return;
+    }
+    const item = scenarios[current];
+    document.getElementById('from').innerText = item.f;
+    document.getElementById('subject').innerText = item.s;
+    document.getElementById('body').innerText = item.b;
+    document.getElementById('url').innerText = item.u;
+    document.getElementById('counter').innerText = `Log ${String(current + 1).padStart(2, '0')} / 10`;
+    
+    document.getElementById('feedback').style.display = 'none';
+    document.getElementById('next').style.display = 'none';
+    document.getElementById('controls').style.display = 'flex';
+  }
+
+  function runCheck(choice) {
+    const item = scenarios[current];
+    const isCorrect = (choice === item.p);
+    if (isCorrect) score++;
+
+    const fb = document.getElementById('feedback');
+    fb.style.display = 'block';
+    fb.innerHTML = `<strong style="text-transform:uppercase; font-size:11px;">${isCorrect ? 'Correcto' : 'Error'}</strong><br><br>${item.r}`;
+    
+    document.getElementById('controls').style.display = 'none';
+    document.getElementById('next').style.display = 'block';
+    document.getElementById('score').innerText = Math.round((score / (current + 1)) * 100) + "%";
+    current++;
+  }
+
+  function loadNext() {
+    loadItem();
+  }
+
+  function showResults() {
+    document.getElementById('game-container').innerHTML = `
+      <div style="padding: 60px 0; text-align: center;">
+        <h1 style="font-size: 60px; margin: 0; font-weight: 300;">${Math.round((score/10)*100)}%</h1>
+        <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 2px; color: var(--gray);">Precisión de análisis final</p>
+        <button onclick="location.reload()" class="btn" style="margin-top: 40px; width: 200px;">Reiniciar</button>
+      </div>
+    `;
+  }
+
+  window.onload = loadItem;
+</script>
+</body>
+</html>
